@@ -1,3 +1,3 @@
 [env]
-CA_CERT_PATH="./server-pki-mldsa44/CA.crt"
+CA_CERT_PATH="../../server-pki-mldsa44/CA.crt"
 BACKEND_URL="https://localhost:4433"

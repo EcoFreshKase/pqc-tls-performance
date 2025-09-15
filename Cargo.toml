@@ -1,0 +1,5 @@
+[workspace]
+members = [
+    "tools/send-openssl-request"
+]
+resolver = "2"
