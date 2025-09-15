@@ -1,0 +1,47 @@
+x-defaults: &default_groups mlkem512:mlkem768:mlkem1024:X25519MLKEM768:SecP256r1MLKEM768
+
+x-oqs-tags: &oqs_tags
+  LIBOQS_TAG: "0.14.0"
+  OQSPROVIDER_TAG: "0.10.0"
+
+services:
+  oqs-nginx:
+    build:
+      context: https://github.com/open-quantum-safe/oqs-demos.git#main:nginx
+      dockerfile: Dockerfile
+      args:
+        DEFAULT_GROUPS: *default_groups
+        <<: *oqs_tags
+    ports:
+      - 4433:4433
+    volumes:
+      - ./nginx-conf:/opt/nginx/nginx-conf
+      - ./server-pki-mldsa44:/opt/nginx/pki
+    depends_on:
+      - webserver
+
+  webserver:
+    image: python:3.11-slim
+    command: python -m http.server 8000
+    volumes:
+      - ./www:/usr/src/app
+    ports:
+      - 8000:8000
+    working_dir: /usr/src/app
+
+  # client:
+  #   build:
+  #     context: ./tools/send-openssl-request
+  #     dockerfile: Dockerfile
+  #     args:
+  #       DEFAULT_GROUPS: *default_groups
+  #       <<: *oqs_tags
+  #   volumes:
+  #     - ./server-pki:/opt/nginx/pki
+  #   environment:
+  #       - CA_CERT_PATH=/opt/nginx/pki/CA.crt
+  #       - BACKEND_URL=https://localhost:4433
+  #   network_mode: "host"
+  #   depends_on:
+  #     - oqs-nginx
+  #     - webserver
