@@ -223,6 +223,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "gather-test-data"
+version = "0.1.0"
+
+[[package]]
 name = "getrandom"
 version = "0.2.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -731,13 +735,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "quantum-safe-reqwest"
-version = "0.1.0"
-dependencies = [
- "reqwest",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.40"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -902,6 +899,13 @@ checksum = "cc1f0cbffaac4852523ce30d8bd3c5cdc873501d96ff467ca09b6767bb8cd5c0"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "send-openssl-request"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
 ]
 
 [[package]]

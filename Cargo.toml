@@ -1,5 +1,6 @@
 [workspace]
 members = [
-    "tools/send-openssl-request"
+    "tools/gather-test-data",
+    "tools/send-openssl-request",
 ]
-resolver = "2"
+resolver = "3"
