@@ -21,15 +21,10 @@ KEM_ALGS = {
     3: ["mlkem768", "X448", "P-384"], 
     5: ["mlkem1024", "P-521"]
 }
-OQS_SIG_ALGS = {
+SIG_ALGS = {
     1: ["mldsa44", "rsa:3072", "ed25519"],
     3: ["mldsa65", "rsa:7680", "ed448"],
     5: ["mldsa87", "rsa:15360"]
-}
-OSSL35_SIG_ALGS = {
-    1: ["rsa:3072", "ed25519"],
-    3: ["rsa:7680", "ed448"],
-    5: ["rsa:15360"]
 }
 
 MEASUREMENT_FILTERING_REGEX = r"\d+\.\d+\s"
@@ -139,7 +134,6 @@ def get_measurement_data(use_openssl_35: bool) -> str:
 if __name__ == "__main__":
 
     ossl35_running = True if len(sys.argv) > 1 and sys.argv[1] == "ossl35" else False
-    SIG_ALGS = OSSL35_SIG_ALGS if ossl35_running else OQS_SIG_ALGS
     
     RESULT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
