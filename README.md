@@ -1,3 +1,22 @@
+# Prerequisites
+- OpenSSL 3.0.0
+- ops-provider 0.10.1
+- Both the default provider and the oqsprovider need to be active
+  - see the [oqs-provide README](https://github.com/open-quantum-safe/oqs-provider) on how to install the oqsprovider
+- pqsprovider 0.2.0
+
+# Installation
+
+Create a side installation of openssl3.5
+```bash
+wget https://www.openssl.org/source/openssl-3.5.1.tar.gz
+tar xvf openssl-3.5.1.tar.gz
+cd openssl-3.5.1
+./Configure --prefix=$HOME/openssl-3.5 --libdir=lib
+make -j$(nproc)
+make install_sw
+```
+
 # Vorgehensweise
 
 - Wie genau und welche Werte will ich aufnehmen?
@@ -18,12 +37,11 @@ Für FIPS Algorithmen: http://nist.gov/news-events/news/2024/08/nist-releases-fi
 
 liboqs nutzen $\to$ neuere Version und zum Vergleichen
 
-- [Unterstützt alles eigentlich](https://openquantumsafe.org/liboqs/algorithms/)
-  aws-lc-rs nutzen für einige
 - [Unterstützt](https://github.com/aws/aws-lc/blob/main/crypto/fipsmodule/PQREADME.md) - ML-KEM - ML-DSA
   openssl 3.5
 - [Unterstützt](https://openssl-library.org/post/2025-04-08-openssl-35-final-release/) - ML-KEM - ML-DSA - SLH-DSA
   weitere Implementierungen?
+- pqsiehld supported ML-KEM und ML-DSA
 
 Mehr Algorithmen als die FIPS 203, 204, 205? Sind andere PQC noch interessant?
 
