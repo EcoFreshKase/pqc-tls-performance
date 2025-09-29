@@ -134,7 +134,6 @@ def get_measurement_data(use_openssl_35: bool) -> str:
 if __name__ == "__main__":
 
     ossl35_running = True if len(sys.argv) > 1 and sys.argv[1] == "ossl35" else False
-    ossl35_running = True
     
     RESULT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
