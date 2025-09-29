@@ -1,11 +1,12 @@
 # Prerequisites
-- OpenSSL 3.0.0
-- ops-provider 0.10.1
-- Both the default provider and the oqsprovider need to be active
-  - see the [oqs-provide README](https://github.com/open-quantum-safe/oqs-provider) on how to install the oqsprovider
+- OpenSSL 3.4.11 locally installed
+- opsprovider 0.10.1-dev
 - pqsprovider 0.2.0
+- oqsprovider and pqsprovider so files need to be in `/usr/lib/x86_64-linux-gnu/ossl-modules/`
 
 # Installation
+
+## OpenSSl 3.5
 
 Create a side installation of openssl3.5
 ```bash
@@ -16,6 +17,31 @@ cd openssl-3.5.1
 make -j$(nproc)
 make install_sw
 ```
+
+## oqsprovider Installation
+
+See the oqsprovider docuemanation:
+https://github.com/open-quantum-safe/oqs-provider
+
+## pqshield Installation
+
+You need to get the proprietary [pqshield](https://pqshield.com/)provider
+
+# Data collection
+
+## OQS Data
+
+1. Copy `configs/openssl_oqs.cnf` into `/etc/ssl/openssl.cnf`
+2. `python3 src/main.py`
+## PQShield Data
+
+1. Copy `configs/openssl_pqs.cnf` into `/etc/ssl/openssl.cnf`
+2. `python3 src/main.py`
+
+## OQS Data
+
+1. Copy `configs/openssl_oqs.cnf` into `/etc/ssl/openssl.cnf`
+2. `python3 src/main.py`
 
 # Vorgehensweise
 
