@@ -6,7 +6,7 @@ set -e
 # export CERT_PRIV_KEY_PATH=./tmp/server.key
 # export CERT_REQUEST_PATH=./tmp/server.csr
 # export CERT_PATH=./tmp/server.crt
-# export SIG_ALG=mldsa44
+# export SIG_ALG=rsa:15360
 # export USE_OSSL35=1
 
 if [ "${USE_OSSL35:-0}" = "1" ]; then

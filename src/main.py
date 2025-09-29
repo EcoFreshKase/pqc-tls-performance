@@ -82,8 +82,8 @@ def start_server(kem_alg: str, sig_alg: str, use_openssl_35: bool) -> Generator[
             "bash ./src/start_server.sh",
             {
                 "KEM_ALG": kem_alg,
-                "CERT_PATH": str(cert_path),
-                "KEY_PATH": str(key_path),
+                "CERT_PATH": str(cert_path.absolute()),
+                "KEY_PATH": str(key_path.absolute()),
                 "USE_OSSL35": int(use_openssl_35)
             }
         )
@@ -134,6 +134,7 @@ def get_measurement_data(use_openssl_35: bool) -> str:
 if __name__ == "__main__":
 
     ossl35_running = True if len(sys.argv) > 1 and sys.argv[1] == "ossl35" else False
+    ossl35_running = True
     
     RESULT_FILE.parent.mkdir(parents=True, exist_ok=True)
 
