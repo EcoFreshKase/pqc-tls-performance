@@ -14,7 +14,7 @@ from typing import Generator, Tuple
 
 NIST_LEVELS = [1, 3, 5]
 
-TEST_TIME = 1
+TEST_TIME = 60
 
 KEM_ALGS = {
     1: ["mlkem512", "X25519", "P-256"], 
