@@ -14,7 +14,7 @@ from typing import Generator, Tuple
 
 NIST_LEVELS = [1, 3, 5]
 
-TEST_TIME = 30
+TEST_TIME = 1
 
 KEM_ALGS = {
     1: ["mlkem512", "X25519", "P-256"], 
@@ -27,8 +27,18 @@ SIG_ALGS = {
     5: ["mldsa87", "rsa:15360"]
 }
 
-MEASUREMENT_FILTERING_REGEX = r"\d+\.\d+\s"
-RESULT_FILE = Path("./results/results.csv")
+KEM_ALGS_PERFORMANCE = [
+    "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"
+]
+# SIG_ALGS_PERFORMANCE = [
+#     "ML-DSA-44", "ML-DSA-65", "ML-DSA-87",
+# ]
+
+MEASUREMENT_FILTERING_REGEX_TLS = r"\d+\.\d+\s"
+MEASUREMENT_FILTERING_REGEX_KEM = r"((\d|\.)*|\s+){5}$"
+RESULT_FILE_TLS = Path("./results/results_tls.csv")
+RESULT_FILE_KEM_ALG_PERF = Path("./results/results_kem_alg.csv")
+RESULT_FILE_SIG_ALG_PERF = Path("./results/results_sig_alg.csv")
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -129,21 +139,64 @@ def get_measurement_data(use_openssl_35: bool) -> str:
     measurement_stream = os.popen(command_test)
     measurement_output = measurement_stream.read()
 
-    return re.search(MEASUREMENT_FILTERING_REGEX, measurement_output).group()
+    return re.search(MEASUREMENT_FILTERING_REGEX_TLS, measurement_output).group()
+
+def get_algorithm_performance(alg: str, use_openssl_35: bool) -> str:
+    command_test = create_command_with_env(
+        "bash ./src/get_alg_performance.sh", 
+        {
+            "ALG": alg,
+            "TEST_TIME": str(TEST_TIME),
+            "USE_OSSL35": int(use_openssl_35)
+        }
+    )
+    logging.info(f"Running algorithm performance test for {alg}")
+    logging.debug(f"Algorithm Test command: {command_test}")
+    measurement_stream = os.popen(command_test)
+    return measurement_stream.read()
+
+def get_kem_algorithm_performance(alg: str, use_openssl_35: bool) -> list[str, 3]:
+    measurement_output = get_algorithm_performance(alg, use_openssl_35)
+
+    output = list(filter(lambda x: x != "", re.search(MEASUREMENT_FILTERING_REGEX_KEM, measurement_output).group().split(" ")))
+
+    if (len(output) != 3):
+        logging.error(f"Could not parse algorithm performance output for {alg}. Full output:\n{measurement_output}")
+        exit(1)
+
+    return output
+
+def get_sig_algorithm_performance(alg: str, use_openssl_35: bool) -> list[str, 3]:
+    measurement_output = get_algorithm_performance(alg, use_openssl_35)
+
+    output = list(filter(lambda x: x != "", re.search(MEASUREMENT_FILTERING_REGEX_KEM, measurement_output).group().split(" ")))
+
+    if (len(output) != 3):
+        logging.error(f"Could not parse algorithm performance output for {alg}. Full output:\n{measurement_output}")
+        exit(1)
+
+    return output
+
 
 if __name__ == "__main__":
 
     ossl35_running = True if len(sys.argv) > 1 and sys.argv[1] == "ossl35" else False
     
-    RESULT_FILE.parent.mkdir(parents=True, exist_ok=True)
+    RESULT_FILE_TLS.parent.mkdir(parents=True, exist_ok=True)
 
-    if RESULT_FILE.exists(follow_symlinks=True):
-        logging.error(f"Result file {RESULT_FILE} already exists. Please move or delete it before running the tests.")
+    if RESULT_FILE_TLS.exists(follow_symlinks=True) or RESULT_FILE_KEM_ALG_PERF.exists(follow_symlinks=True) or RESULT_FILE_SIG_ALG_PERF.exists(follow_symlinks=True):
+        logging.error(f"TLS result file {RESULT_FILE_TLS} or ALG result file {RESULT_FILE_KEM_ALG_PERF} already exists. Please move or delete it before running the tests.")
         exit(1)
 
-    with open(RESULT_FILE, "w") as result_file:
+    with open(RESULT_FILE_TLS, "w") as result_file:
         result_file.write("nist_level,test_time,KEM,SIG,connections/s\n")
-    
+
+    with open(RESULT_FILE_KEM_ALG_PERF, "w") as result_file:
+        result_file.write("test_time,kem-algorithm,keygens/s,encaps/s,decaps/s\n")
+
+    with open(RESULT_FILE_SIG_ALG_PERF, "w") as result_file:
+        result_file.write("test_time,sig-algorithm,keygens/s,signs/s,verify/s\n")
+
     for level in NIST_LEVELS:
         for kem_alg in KEM_ALGS[level]:
             for sig_alg in SIG_ALGS[level]:
@@ -153,7 +206,28 @@ if __name__ == "__main__":
                     data = get_measurement_data(ossl35_running)
                     logging.info(f"  Result: {data} connections/s")
 
-                    with open(RESULT_FILE, "a") as result_file:
+                    with open(RESULT_FILE_TLS, "a") as result_file:
                         result_file.write(f"{level},{TEST_TIME},{kem_alg},{sig_alg},{data}\n")
     
-    logging.info(f"All tests completed. Results saved to {RESULT_FILE}")
+    logging.info(f"All tls-connections/s tests completed. Results saved to {RESULT_FILE_TLS}")
+
+    logging.info(f"Getting kem algorithm performance")
+    for alg in KEM_ALGS_PERFORMANCE:
+        data = get_kem_algorithm_performance(alg, ossl35_running)
+        logging.info(f"  Algorithm {alg} performance: {data}")
+
+        with open(RESULT_FILE_KEM_ALG_PERF, "a") as result_file:
+            result_file.write(f"{TEST_TIME},{alg},{data[0]},{data[1]},{data[2]}\n")
+    logging.info(f"All kem algorithm performance tests completed. Results saved to {RESULT_FILE_KEM_ALG_PERF}")
+
+    # Due to openssl error mldsa can not be tested right now
+    # https://github.com/openssl/openssl/issues/27373
+    #
+    # logging.info(f"Getting sig algorithm performance")
+    # for alg in SIG_ALGS_PERFORMANCE:
+    #     data = get_sig_algorithm_performance(alg, ossl35_running)
+    #     logging.info(f"  Algorithm {alg} performance: {data}")
+
+    #     with open(RESULT_FILE_SIG_ALG_PERF, "a") as result_file:
+    #         result_file.write(f"{TEST_TIME},{alg},{data[0]},{data[1]},{data[2]}\n")
+    # logging.info(f"All sig algorithm performance tests completed. Results saved to {RESULT_FILE_SIG_ALG_PERF}")    
