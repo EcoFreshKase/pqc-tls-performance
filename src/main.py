@@ -28,6 +28,9 @@ SIG_ALGS = {
 }
 
 KEM_ALGS_PERFORMANCE = [
+    "mlkem512", "mlkem768", "mlkem1024"
+]
+KEM_ALGS_OSS35_PERFORMANCE = [
     "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"
 ]
 # SIG_ALGS_PERFORMANCE = [
@@ -212,7 +215,8 @@ if __name__ == "__main__":
     logging.info(f"All tls-connections/s tests completed. Results saved to {RESULT_FILE_TLS}")
 
     logging.info(f"Getting kem algorithm performance")
-    for alg in KEM_ALGS_PERFORMANCE:
+    algs = KEM_ALGS_OSS35_PERFORMANCE if ossl35_running else KEM_ALGS_PERFORMANCE
+    for alg in algs:
         data = get_kem_algorithm_performance(alg, ossl35_running)
         logging.info(f"  Algorithm {alg} performance: {data}")
 
