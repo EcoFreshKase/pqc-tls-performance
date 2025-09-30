@@ -17,13 +17,13 @@ NIST_LEVELS = [1, 3, 5]
 TEST_TIME = 60
 
 KEM_ALGS = {
-    1: ["mlkem512", "X25519", "P-256"], 
-    3: ["mlkem768", "X448", "P-384"], 
+    1: ["mlkem512", "P-256"], 
+    3: ["mlkem768", "P-384"], 
     5: ["mlkem1024", "P-521"]
 }
 SIG_ALGS = {
-    1: ["mldsa44", "rsa:3072", "ed25519"],
-    3: ["mldsa65", "rsa:7680", "ed448"],
+    1: ["mldsa44", "rsa:3072"],
+    3: ["mldsa65", "rsa:7680"],
     5: ["mldsa87", "rsa:15360"]
 }
 
