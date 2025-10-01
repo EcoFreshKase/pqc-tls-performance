@@ -1,0 +1,4 @@
+test_time,kem-algorithm,keygens/s,encaps/s,decaps/s
+60,mlkem512,110300.0,122033.6,103059.0
+60,mlkem768,70186.4,74352.7,63347.6
+60,mlkem1024,51838.7,55024.2,46500.3
