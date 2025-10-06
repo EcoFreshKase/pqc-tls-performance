@@ -33,9 +33,9 @@ KEM_ALGS_PERFORMANCE = [
 KEM_ALGS_OSS35_PERFORMANCE = [
     "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"
 ]
-# SIG_ALGS_PERFORMANCE = [
-#     "ML-DSA-44", "ML-DSA-65", "ML-DSA-87",
-# ]
+SIG_ALGS_PERFORMANCE = [
+    "mldsa44", "mldsa65", "mldsa87"
+]
 
 MEASUREMENT_FILTERING_REGEX_TLS = r"\d+\.\d+\s"
 MEASUREMENT_FILTERING_REGEX_KEM = r"((\d|\.)*|\s+){5}$"
@@ -224,14 +224,16 @@ if __name__ == "__main__":
             result_file.write(f"{TEST_TIME},{alg},{data[0]},{data[1]},{data[2]}\n")
     logging.info(f"All kem algorithm performance tests completed. Results saved to {RESULT_FILE_KEM_ALG_PERF}")
 
-    # Due to openssl error mldsa can not be tested right now
+    # Due to openssl error mldsa can not be tested for openssl3.5 right now
     # https://github.com/openssl/openssl/issues/27373
-    #
-    # logging.info(f"Getting sig algorithm performance")
-    # for alg in SIG_ALGS_PERFORMANCE:
-    #     data = get_sig_algorithm_performance(alg, ossl35_running)
-    #     logging.info(f"  Algorithm {alg} performance: {data}")
+    if not ossl35_running:
+        logging.info(f"Getting sig algorithm performance")
+        for alg in SIG_ALGS_PERFORMANCE:
+            data = get_sig_algorithm_performance(alg, ossl35_running)
+            logging.info(f"  Algorithm {alg} performance: {data}")
 
-    #     with open(RESULT_FILE_SIG_ALG_PERF, "a") as result_file:
-    #         result_file.write(f"{TEST_TIME},{alg},{data[0]},{data[1]},{data[2]}\n")
-    # logging.info(f"All sig algorithm performance tests completed. Results saved to {RESULT_FILE_SIG_ALG_PERF}")    
+            with open(RESULT_FILE_SIG_ALG_PERF, "a") as result_file:
+                result_file.write(f"{TEST_TIME},{alg},{data[0]},{data[1]},{data[2]}\n")
+        logging.info(f"All sig algorithm performance tests completed. Results saved to {RESULT_FILE_SIG_ALG_PERF}")    
+    else:
+        logging.warning("Skipping sig algorithm performance tests for openssl 3.5 due to https://github.com/openssl/openssl/issues/27373")
