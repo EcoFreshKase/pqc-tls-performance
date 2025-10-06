@@ -10,17 +10,29 @@ RESULTS_BASE_PATH = Path("./results/")
 AMT_OF_MEASUREMENTS = 5
 RESULT_PROVIDERS = ("oqs", "ossl35", "pqs")
 
-def read_tls_data() -> pd.DataFrame:
+KEM_NAME_MAP = {
+    "ML-KEM-1024": "mlkem1024",
+    "ML-KEM-768": "mlkem768",
+    "ML-KEM-512": "mlkem512",
+}
+
+def read_data(file_suffix: str) -> pd.DataFrame:
     data = pd.DataFrame()
     for provider in RESULT_PROVIDERS:
         for i in range(1, AMT_OF_MEASUREMENTS + 1):
-            csv_path = RESULTS_BASE_PATH / f"{provider}_{i}" / f"results_tls.csv"
+            csv_path = RESULTS_BASE_PATH / f"{provider}_{i}" / file_suffix
             res = pd.read_csv(csv_path)
             res['provider'] = provider
             data = pd.concat([data, res], ignore_index=True)
     return data
 
-def get_nist_graph(nist_level: int, data: pd.DataFrame):
+def read_tls_data() -> pd.DataFrame:
+    return read_data("results_tls.csv")
+
+def read_kem_alg_perf_data() -> pd.DataFrame:
+    return read_data("results_kem_alg.csv")
+
+def get_tls_graph(nist_level: int, data: pd.DataFrame):
     data = data[data['nist_level'].astype(int) == int(nist_level)].copy()
     data['label'] = data['KEM'].astype(str) + ' | ' + data['SIG'].astype(str)
 
@@ -80,15 +92,104 @@ def get_nist_graph(nist_level: int, data: pd.DataFrame):
     # Increase legend text size and title size for readability
     ax.legend(title="Provider", fontsize=12, title_fontsize=13, markerscale=1.2, handlelength=2, handletextpad=0.8)
 
+def get_kem_alg_graph(data: pd.DataFrame):
+    """
+    Draw grouped bar chart: outer groups by KEM algorithm, inner groups by provider,
+    with two bars per provider (encaps and decaps). Same color per provider, decaps hatched.
+    """
+    # normalize KEM names
+    data = data.replace({"kem-algorithm": KEM_NAME_MAP})
+
+    # aggregate mean and std per (kem-algorithm, provider)
+    summary = data.groupby(['kem-algorithm', 'provider'], as_index=False)[['encaps/s', 'decaps/s']].agg(['mean', 'std']).reset_index()
+    summary.columns = ['_'.join(col).strip() if col[1] else col[0] for col in summary.columns.values]
+    summary.rename(columns={
+        'kem-algorithm_': 'kem-algorithm',
+        'provider_': 'provider',
+        'encaps/s_mean': 'encaps/s_mean',
+        'encaps/s_std': 'encaps/s_std',
+        'decaps/s_mean': 'decaps/s_mean',
+        'decaps/s_std': 'decaps/s_std',
+    }, inplace=True)
+
+    # pivot so rows = kem-algorithm, columns = provider
+    pivot_encap = summary.pivot(index='kem-algorithm', columns='provider', values='encaps/s_mean').fillna(0)
+    pivot_encap_std = summary.pivot(index='kem-algorithm', columns='provider', values='encaps/s_std').fillna(0)
+    pivot_decap = summary.pivot(index='kem-algorithm', columns='provider', values='decaps/s_mean').fillna(0)
+    pivot_decap_std = summary.pivot(index='kem-algorithm', columns='provider', values='decaps/s_std').fillna(0)
+
+    kem_labels = pivot_encap.index.tolist()
+    providers = pivot_encap.columns.tolist()
+
+    n_kem = len(kem_labels)
+    n_prov = len(providers)
+    x = np.arange(n_kem)
+
+    # sizing: outer groups by KEM, inner groups by provider, two bars (encap+decap) per provider
+    group_total_width = 0.9
+    prov_group_width = group_total_width / max(n_prov, 1)
+    bar_width = prov_group_width * 0.45   # each metric bar
+    gap = prov_group_width * 0.025        # gap between encap and decap for same provider
+
+    fig, ax = plt.subplots(figsize=(16, 8))
+    palette = sns.color_palette("colorblind", n_colors=n_prov)
+
+    # draw bars: for each provider, plot encap and decap for all KEM algorithms
+    for i, provider in enumerate(providers):
+        prov_center = x - (group_total_width / 2) + i * prov_group_width + prov_group_width / 2
+
+        encap_vals = pivot_encap[provider].values
+        encap_errs = pivot_encap_std[provider].values
+        decap_vals = pivot_decap[provider].values
+        decap_errs = pivot_decap_std[provider].values
+
+        encap_positions = prov_center - (bar_width / 2 + gap / 2)
+        decap_positions = prov_center + (bar_width / 2 + gap / 2)
+
+        # Plot encap bars (solid)
+        bars_enc = ax.bar(encap_positions, encap_vals, width=bar_width,
+                          color=palette[i], align='center', zorder=3,
+                          yerr=encap_errs, error_kw={'elinewidth':4, 'alpha':0.9})
+        # Plot decap bars (hatched, same color)
+        bars_dec = ax.bar(decap_positions, decap_vals, width=bar_width,
+                          color=palette[i], hatch='///', edgecolor="#ffffff", align='center', zorder=3,
+                          yerr=decap_errs, error_kw={'elinewidth':4, 'alpha':0.9})
+
+        # label bars
+        ax.bar_label(bars_enc, fmt='%.0f', padding=3)
+        ax.bar_label(bars_dec, fmt='%.0f', padding=3)
+
+    # xticks at group centers
+    ax.set_xticks(x)
+    ax.set_xticklabels(kem_labels, rotation=0, ha='center')
+    ax.set_xlabel('KEM algorithm')
+    ax.set_ylabel('Operations per second')
+    ax.set_title('KEM algorithm performance: encaps & decaps by provider')
+
+    # Provider legend: colored patches + encap/decap explanation
+    from matplotlib.patches import Patch
+    provider_handles = [Patch(facecolor=palette[i], label=providers[i]) for i in range(len(providers))]
+    enc_handle = Patch(facecolor='white', edgecolor='black', label='encaps/s (solid)')
+    dec_handle = Patch(facecolor='white', edgecolor='black', hatch='///', label='decaps/s (hatched)')
+    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Provider / Metric',
+              fontsize=11, title_fontsize=12, ncol=2)
+
+    # Grid customization (only horizontal lines)
+    ax.set_axisbelow(True)
+    ax.yaxis.grid(True, which='major', linestyle='--', linewidth=0.8, color='0.75')
+    ax.yaxis.set_minor_locator(AutoMinorLocator(2))
+    ax.yaxis.grid(True, which='minor', linestyle=':', linewidth=0.5, color='0.85', alpha=0.7)
+    ax.xaxis.grid(False)
 
 if __name__ == "__main__":
-    # Sample data
-    
+   
     tls_data = read_tls_data()
+    get_tls_graph(1, tls_data)
+    get_tls_graph(3, tls_data)
+    get_tls_graph(5, tls_data)
 
-    get_nist_graph(1, tls_data)
-    get_nist_graph(3, tls_data)
-    get_nist_graph(5, tls_data)
+    kem_alg_perf_data = read_kem_alg_perf_data()
+    get_kem_alg_graph(kem_alg_perf_data)
 
 
     plt.tight_layout()
