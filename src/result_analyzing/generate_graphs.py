@@ -8,12 +8,14 @@ import numpy as np
 
 RESULTS_BASE_PATH = Path("./results/")
 AMT_OF_MEASUREMENTS = 5
-RESULT_PROVIDERS = ("Open Quantum Safe", "pqShield", "OpenSSL 3.5")
 RESULT_PROVIDERS_FILE_MAP = {
-    "Open Quantum Safe": "oqs",
-    "pqShield": "pqs",
-    "OpenSSL 3.5": "ossl35"
+    "oqs": "Open Quantum Safe",
+    "pqs": "pqShield",
+    "ossl35": "OpenSSL 3.5"
 }
+
+# Fixed provider order to ensure consistent colors across all diagrams
+PROVIDER_ORDER = ["Open Quantum Safe", "pqShield", "OpenSSL 3.5"]
 
 KEM_NAME_MAP = {
     "ML-KEM-1024": "mlkem1024",
@@ -23,11 +25,11 @@ KEM_NAME_MAP = {
 
 def read_data(file_suffix: str) -> pd.DataFrame:
     data = pd.DataFrame()
-    for provider in RESULT_PROVIDERS:
+    for provider in RESULT_PROVIDERS_FILE_MAP.keys():
         for i in range(1, AMT_OF_MEASUREMENTS + 1):
             csv_path = RESULTS_BASE_PATH / f"{provider}_{i}" / file_suffix
             res = pd.read_csv(csv_path)
-            res['provider'] = provider
+            res['provider'] = RESULT_PROVIDERS_FILE_MAP[provider]
             data = pd.concat([data, res], ignore_index=True)
     return data
 
@@ -50,7 +52,8 @@ def get_tls_graph(nist_level: int, data: pd.DataFrame):
     pivot = summary.pivot(index='label', columns='provider', values='mean').fillna(0)
     pivot_std  = summary.pivot(index='label', columns='provider', values='std').fillna(0)
     labels = pivot.index.tolist()
-    providers = pivot.columns.tolist()
+    # Use consistent provider ordering, filtering out any missing providers
+    providers = [p for p in PROVIDER_ORDER if p in pivot.columns]
 
     n = len(labels)
     m = len(providers)
@@ -123,7 +126,8 @@ def get_kem_alg_graph(data: pd.DataFrame):
     pivot_decap_std = summary.pivot(index='kem-algorithm', columns='provider', values='decaps/s_std').fillna(0)
 
     kem_labels = pivot_encap.index.tolist()
-    providers = pivot_encap.columns.tolist()
+    # Use consistent provider ordering, filtering out any missing providers
+    providers = [p for p in PROVIDER_ORDER if p in pivot_encap.columns]
 
     n_kem = len(kem_labels)
     n_prov = len(providers)
@@ -205,7 +209,8 @@ def get_sig_alg_graph(data: pd.DataFrame):
     pivot_verify_std = summary.pivot(index='sig-algorithm', columns='provider', values='verify/s_std').fillna(0)
 
     sig_labels = pivot_sign.index.tolist()
-    providers = pivot_sign.columns.tolist()
+    # Use consistent provider ordering, filtering out any missing providers
+    providers = [p for p in PROVIDER_ORDER if p in pivot_sign.columns]
 
     n_sig = len(sig_labels)
     n_prov = len(providers)
