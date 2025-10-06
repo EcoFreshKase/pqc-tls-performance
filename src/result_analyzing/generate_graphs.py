@@ -88,9 +88,9 @@ def get_tls_graph(nist_level: int, data: pd.DataFrame):
 
     ax.set_xticks(x)
     ax.set_xticklabels(labels, rotation=0, ha='center')
-    ax.set_xlabel('KEM | SIG')
-    ax.set_ylabel('Connections per second')
-    ax.set_title(f'NIST level {nist_level} — connections/s by KEM|SIG')
+    ax.set_xlabel('Schlüsselkapselungsverfahren | Signatur Algorithmus')
+    ax.set_ylabel('Verbindungen pro Sekunde')
+    ax.set_title(f'NIST level {nist_level} — Verbindungen pro Sekunde nach Schlüsselkapselungsverfahren | Signatur Algorithmus')
 
     # Grid customization (only horizontal lines)
     ax.set_axisbelow(True)
@@ -101,7 +101,7 @@ def get_tls_graph(nist_level: int, data: pd.DataFrame):
 
 
     # Increase legend text size and title size for readability
-    ax.legend(title="Provider", fontsize=12, title_fontsize=13, markerscale=1.2, handlelength=2, handletextpad=0.8)
+    ax.legend(title="Anbieter", fontsize=12, title_fontsize=13, markerscale=1.2, handlelength=2, handletextpad=0.8)
 
 def get_kem_alg_graph(data: pd.DataFrame):
     # normalize KEM names
@@ -170,16 +170,16 @@ def get_kem_alg_graph(data: pd.DataFrame):
     # xticks at group centers
     ax.set_xticks(x)
     ax.set_xticklabels(kem_labels, rotation=0, ha='center')
-    ax.set_xlabel('KEM algorithm')
-    ax.set_ylabel('Operations per second')
-    ax.set_title('KEM algorithm performance: encaps & decaps by provider')
+    ax.set_xlabel('Schlüsselkapselungsverfahren')
+    ax.set_ylabel('Operationen pro Sekunde')
+    ax.set_title('Schlüsselkapselungsverfahren-Leistung: Kapselung & Dekapselung nach Anbieter')
 
     # Provider legend: colored patches + encap/decap explanation
     from matplotlib.patches import Patch
     provider_handles = [Patch(facecolor=palette[i], label=providers[i]) for i in range(len(providers))]
-    enc_handle = Patch(facecolor='white', edgecolor='black', label='encaps/s (solid)')
-    dec_handle = Patch(facecolor='white', edgecolor='black', hatch='///', label='decaps/s (hatched)')
-    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Provider / Metric',
+    enc_handle = Patch(facecolor='white', edgecolor='black', label='Kapselung/s')
+    dec_handle = Patch(facecolor='white', edgecolor='black', hatch='///', label='Dekapselung/s')
+    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Anbieter / Metrik',
               fontsize=11, title_fontsize=12, ncol=2)
 
     # Grid customization (only horizontal lines)
@@ -253,16 +253,16 @@ def get_sig_alg_graph(data: pd.DataFrame):
     # xticks at group centers
     ax.set_xticks(x)
     ax.set_xticklabels(sig_labels, rotation=0, ha='center')
-    ax.set_xlabel('SIG algorithm')
-    ax.set_ylabel('Operations per second')
-    ax.set_title('SIG algorithm performance: signs/s & verifications/s by provider')
+    ax.set_xlabel('Signatur Algorithmus')
+    ax.set_ylabel('Operationen pro Sekunde')
+    ax.set_title('Leistung des Signatur Algorithmus: Signaturen/s & Verifikationen/s nach Anbieter')
 
     # Provider legend: colored patches + encap/decap explanation
     from matplotlib.patches import Patch
     provider_handles = [Patch(facecolor=palette[i], label=providers[i]) for i in range(len(providers))]
-    enc_handle = Patch(facecolor='white', edgecolor='black', label='signs/s (solid)')
-    dec_handle = Patch(facecolor='white', edgecolor='black', hatch='///', label='verifications/s (hatched)')
-    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Provider / Metric',
+    enc_handle = Patch(facecolor='white', edgecolor='black', label='Signaturen/s')
+    dec_handle = Patch(facecolor='white', edgecolor='black', hatch='///', label='Verifikationen/s')
+    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Anbieter / Metrik',
               fontsize=11, title_fontsize=12, ncol=2)
 
     # Grid customization (only horizontal lines)
