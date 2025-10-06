@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-RESULTS_BASE_PATH = Path("./results/")
+RESULTS_BASE_PATH = Path("./results/raw_data/")
 AMT_OF_MEASUREMENTS = 5
 RESULT_PROVIDERS_FILE_MAP = {
     "oqs": "Open Quantum Safe",
