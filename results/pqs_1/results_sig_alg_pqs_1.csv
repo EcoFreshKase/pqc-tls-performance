@@ -1,1 +1,4 @@
 test_time,sig-algorithm,keygens/s,signs/s,verify/s
+60,mldsa44,19221.9,4041.9,18230.4
+60,mldsa65,9401.3,1986.1,9689.0
+60,mldsa87,6400.2,1801.8,7428.3
