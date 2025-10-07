@@ -42,7 +42,7 @@ def read_kem_alg_perf_data() -> pd.DataFrame:
 def read_sig_alg_perf_data() -> pd.DataFrame:
     return read_data("results_sig_alg.csv")
 
-def get_tls_graph(nist_level: int, data: pd.DataFrame):
+def get_tls_graph(nist_level: int, data: pd.DataFrame, ax):
     data = data[data['nist_level'].astype(int) == int(nist_level)].copy()
     data['label'] = data['KEM'].astype(str) + ' | ' + data['SIG'].astype(str)
 
@@ -66,7 +66,6 @@ def get_tls_graph(nist_level: int, data: pd.DataFrame):
     inner_fill = 0.95  # fraction of single_width that is actual bar (rest is padding)
     bar_width = single_width * inner_fill
 
-    fig, ax = plt.subplots(figsize=(14, 8))
     palette = sns.color_palette("colorblind", n_colors=len(providers))
     # plot each provider's bars with offsets so bars within the same label are side-by-side
     for i, provider in enumerate(providers):
@@ -90,7 +89,7 @@ def get_tls_graph(nist_level: int, data: pd.DataFrame):
     ax.set_xticklabels(labels, rotation=0, ha='center')
     ax.set_xlabel('Schlüsselkapselungsverfahren | Signatur Algorithmus')
     ax.set_ylabel('Verbindungen pro Sekunde')
-    ax.set_title(f'NIST level {nist_level} — Verbindungen pro Sekunde nach Schlüsselkapselungsverfahren | Signatur Algorithmus')
+    ax.set_title(f'NIST level {nist_level}')
 
     # Grid customization (only horizontal lines)
     ax.set_axisbelow(True)
@@ -98,10 +97,11 @@ def get_tls_graph(nist_level: int, data: pd.DataFrame):
     ax.yaxis.set_minor_locator(AutoMinorLocator(2))
     ax.yaxis.grid(True, which='minor', linestyle=':', linewidth=0.5, color='0.85', alpha=0.7)
     ax.xaxis.grid(False)
+    ax.margins(y=0.15)
 
 
     # Increase legend text size and title size for readability
-    ax.legend(title="Anbieter", fontsize=12, title_fontsize=13, markerscale=1.2, handlelength=2, handletextpad=0.8)
+    ax.legend(title="Anbieter", fontsize=9, title_fontsize=11, markerscale=1, handlelength=1.5, handletextpad=0.6)
 
 def get_kem_alg_graph(data: pd.DataFrame):
     # normalize KEM names
@@ -273,11 +273,13 @@ def get_sig_alg_graph(data: pd.DataFrame):
     ax.xaxis.grid(False)
 
 if __name__ == "__main__":
-   
+
+    # TLS performance graphs for different NIST levels
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(10, 15), constrained_layout=True)
     tls_data = read_tls_data()
-    get_tls_graph(1, tls_data)
-    get_tls_graph(3, tls_data)
-    get_tls_graph(5, tls_data)
+    get_tls_graph(1, tls_data, ax1)
+    get_tls_graph(3, tls_data, ax2)
+    get_tls_graph(5, tls_data, ax3)
 
     kem_alg_perf_data = read_kem_alg_perf_data()
     get_kem_alg_graph(kem_alg_perf_data)
@@ -287,4 +289,5 @@ if __name__ == "__main__":
     print(sig_alg_perf_data)
 
     plt.tight_layout()
+    plt.subplots_adjust(hspace=0.7)
     plt.show()
