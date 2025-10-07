@@ -16,6 +16,7 @@ RESULT_PROVIDERS_FILE_MAP = {
 
 # Fixed provider order to ensure consistent colors across all diagrams
 PROVIDER_ORDER = ["Open Quantum Safe", "pqShield", "OpenSSL 3.5"]
+KEM_ORDER = ["mlkem512", "mlkem768", "mlkem1024"]
 
 KEM_NAME_MAP = {
     "ML-KEM-1024": "mlkem1024",
@@ -103,6 +104,11 @@ def get_tls_graph(nist_level: int, data: pd.DataFrame, ax):
     # Increase legend text size and title size for readability
     ax.legend(title="Anbieter", fontsize=9, title_fontsize=11, markerscale=1, handlelength=1.5, handletextpad=0.6)
 
+# Sort the pivot tables to match the KEM_ORDER
+def sort_pivot_by_order(pivot, order):
+    return pivot.reindex(order)
+
+# Update the get_kem_alg_graph function to sort by KEM_ORDER
 def get_kem_alg_graph(data: pd.DataFrame):
     # normalize KEM names
     data = data.replace({"kem-algorithm": KEM_NAME_MAP})
@@ -124,6 +130,12 @@ def get_kem_alg_graph(data: pd.DataFrame):
     pivot_encap_std = summary.pivot(index='kem-algorithm', columns='provider', values='encaps/s_std').fillna(0)
     pivot_decap = summary.pivot(index='kem-algorithm', columns='provider', values='decaps/s_mean').fillna(0)
     pivot_decap_std = summary.pivot(index='kem-algorithm', columns='provider', values='decaps/s_std').fillna(0)
+
+    # Sort the pivot tables by KEM_ORDER
+    pivot_encap = sort_pivot_by_order(pivot_encap, KEM_ORDER)
+    pivot_encap_std = sort_pivot_by_order(pivot_encap_std, KEM_ORDER)
+    pivot_decap = sort_pivot_by_order(pivot_decap, KEM_ORDER)
+    pivot_decap_std = sort_pivot_by_order(pivot_decap_std, KEM_ORDER)
 
     kem_labels = pivot_encap.index.tolist()
     # Use consistent provider ordering, filtering out any missing providers
