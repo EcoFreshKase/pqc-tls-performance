@@ -1,3 +1,7 @@
+# I'm extremely ugly, don't try to understand me.
+# My author didn't try to make me handsome
+# so my code quality is ... bad.
+
 from pathlib import Path
 
 from matplotlib.ticker import AutoMinorLocator
@@ -10,18 +14,33 @@ RESULTS_BASE_PATH = Path("./results/raw_data/")
 AMT_OF_MEASUREMENTS = 5
 RESULT_PROVIDERS_FILE_MAP = {
     "oqs": "Open Quantum Safe",
-    "pqs": "pqShield",
+    "pqs": "PQShield",
     "ossl35": "OpenSSL 3.5"
 }
 
 # Fixed provider order to ensure consistent colors across all diagrams
-PROVIDER_ORDER = ["Open Quantum Safe", "pqShield", "OpenSSL 3.5"]
-KEM_ORDER = ["mlkem512", "mlkem768", "mlkem1024"]
+PROVIDER_ORDER = ["Open Quantum Safe", "PQShield", "OpenSSL 3.5"]
+KEM_ORDER = ["ML-KEM-512", "ML-KEM-768", "ML-KEM-1024"]
 
 KEM_NAME_MAP = {
     "ML-KEM-1024": "mlkem1024",
     "ML-KEM-768": "mlkem768",
     "ML-KEM-512": "mlkem512",
+}
+
+ALGORITHM_NAME_MAP = {
+    "mldsa44": "ML-DSA-44",
+    "mldsa65": "ML-DSA-65",
+    "mldsa87": "ML-DSA-87",
+    "rsa:3072": "RSA-3072",
+    "rsa:7680": "RSA-7680",
+    "rsa:15360": "RSA-15360",
+    "mlkem512": "ML-KEM-512",
+    "mlkem768": "ML-KEM-768",
+    "mlkem1024": "ML-KEM-1024",
+    "P-256": "P-256",
+    "P-384": "P-384",
+    "P-521": "P-521"
 }
 
 def read_data(file_suffix: str) -> pd.DataFrame:
@@ -35,13 +54,19 @@ def read_data(file_suffix: str) -> pd.DataFrame:
     return data
 
 def read_tls_data() -> pd.DataFrame:
-    return read_data("results_tls.csv")
+    data = read_data("results_tls.csv")
+    data = data.replace({"KEM": ALGORITHM_NAME_MAP, "SIG": ALGORITHM_NAME_MAP})
+    return data
 
 def read_kem_alg_perf_data() -> pd.DataFrame:
-    return read_data("results_kem_alg.csv")
+    data = read_data("results_kem_alg.csv")
+    data = data.replace({"kem-algorithm": ALGORITHM_NAME_MAP})
+    return data
 
 def read_sig_alg_perf_data() -> pd.DataFrame:
-    return read_data("results_sig_alg.csv")
+    data = read_data("results_sig_alg.csv")
+    data = data.replace({"sig-algorithm": ALGORITHM_NAME_MAP})
+    return data
 
 def get_tls_graph(nist_level: int, data: pd.DataFrame, ax):
     data = data[data['nist_level'].astype(int) == int(nist_level)].copy()
@@ -110,8 +135,6 @@ def sort_pivot_by_order(pivot, order):
 
 # Update the get_kem_alg_graph function to sort by KEM_ORDER
 def get_kem_alg_graph(data: pd.DataFrame):
-    # normalize KEM names
-    data = data.replace({"kem-algorithm": KEM_NAME_MAP})
 
     # aggregate mean and std per (kem-algorithm, provider)
     summary = data.groupby(['kem-algorithm', 'provider'], as_index=False)[['encaps/s', 'decaps/s']].agg(['mean', 'std']).reset_index()
@@ -184,14 +207,13 @@ def get_kem_alg_graph(data: pd.DataFrame):
     ax.set_xticklabels(kem_labels, rotation=0, ha='center')
     ax.set_xlabel('Schlüsselkapselungsverfahren')
     ax.set_ylabel('Operationen pro Sekunde')
-    ax.set_title('Schlüsselkapselungsverfahren-Leistung: Kapselung & Dekapselung nach Anbieter')
 
     # Provider legend: colored patches + encap/decap explanation
     from matplotlib.patches import Patch
     provider_handles = [Patch(facecolor=palette[i], label=providers[i]) for i in range(len(providers))]
     enc_handle = Patch(facecolor='white', edgecolor='black', label='Kapselung/s')
-    dec_handle = Patch(facecolor='white', edgecolor='black', hatch='///', label='Dekapselung/s')
-    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Anbieter / Metrik',
+    dec_handle = Patch(facecolor='white', edgecolor='black', hatch='///', label='Entkapselungen/s')
+    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Anbieter | Metrik',
               fontsize=11, title_fontsize=12, ncol=2)
 
     # Grid customization (only horizontal lines)
@@ -267,14 +289,13 @@ def get_sig_alg_graph(data: pd.DataFrame):
     ax.set_xticklabels(sig_labels, rotation=0, ha='center')
     ax.set_xlabel('Signatur Algorithmus')
     ax.set_ylabel('Operationen pro Sekunde')
-    ax.set_title('Leistung des Signatur Algorithmus: Signaturen/s & Verifikationen/s nach Anbieter')
 
     # Provider legend: colored patches + encap/decap explanation
     from matplotlib.patches import Patch
     provider_handles = [Patch(facecolor=palette[i], label=providers[i]) for i in range(len(providers))]
     enc_handle = Patch(facecolor='white', edgecolor='black', label='Signaturen/s')
     dec_handle = Patch(facecolor='white', edgecolor='black', hatch='///', label='Verifikationen/s')
-    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Anbieter / Metrik',
+    ax.legend(handles=provider_handles + [enc_handle, dec_handle], title='Anbieter | Metrik',
               fontsize=11, title_fontsize=12, ncol=2)
 
     # Grid customization (only horizontal lines)
